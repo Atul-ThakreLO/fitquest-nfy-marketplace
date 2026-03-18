@@ -1,0 +1,36 @@
+{
+  "name": "territory-nft",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "packages/config/*",
+    "tools/*"
+  ],
+  "scripts": {
+    "services:up": "docker compose -f docker-compose.dev.yml up -d",
+    "services:down": "docker compose -f docker-compose.dev.yml down",
+    "services:reset": "docker compose -f docker-compose.dev.yml down -v && docker compose -f docker-compose.dev.yml up -d",
+    "services:logs": "docker compose -f docker-compose.dev.yml logs -f",
+    "services:status": "docker compose -f docker-compose.dev.yml ps",
+    "setup": "bun install && bun run services:up",
+    "dev": "bun run services:up && turbo run dev",
+    "dev:api": "bun run services:up && turbo run dev --filter=territory-nft-api",
+    "dev:web": "turbo run dev --filter=territory-nft-web",
+    "dev:api:solo": "bun run services:up && cd apps/api && bun run --watch src/index.ts",
+    "dev:web:solo": "bun run services:up && cd apps/web && bun run --watch src/index.ts",
+    "build": "turbo run build",
+    "stop": "bun run services:down",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "mint": "bun run tools/mint/mint.ts"
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
+  },
+  "packageManager": "bun@1.3.8"
+}

@@ -1,0 +1,24 @@
+{
+  "extends": "../../packages/config/tsconfig/bun.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["bun-types"],
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    
+    // Module resolution
+    "module": "Preserve",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    
+    // Best practices
+    "strict": true,
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

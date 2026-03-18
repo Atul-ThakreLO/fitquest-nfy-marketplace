@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../../packages/config/tsconfig/bun.json",
+  "compilerOptions": {
+    "module": "ES2022",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "territory-nft-shared": ["../../packages/shared/src/index.ts"],
+      "territory-nft-shared/abis/TerritoryNFT.json": ["../../packages/shared/src/abis/TerritoryNFT.json"],
+      "territory-nft-shared/abis/TerritoryMarketplace.json": ["../../packages/shared/src/abis/TerritoryMarketplace.json"],
+      "territory-nft-shared/abis/TerritoryAuction.json": ["../../packages/shared/src/abis/TerritoryAuction.json"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

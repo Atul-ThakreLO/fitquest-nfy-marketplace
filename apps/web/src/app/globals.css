@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 9, 9, 11;
+  --surface-1: 23, 23, 29;
+  --surface-2: 30, 30, 39;
+  --surface-3: 38, 38, 58;
+  --border: rgba(255,255,255,0.08);
+  --rarity-common: #9CA3AF;
+  --rarity-rare: #60A5FA;
+  --rarity-epic: #A78BFA;
+  --rarity-legendary: #FCD34D;
+  --rarity-mythic: #F97316;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  min-height: 100vh;
+  font-feature-settings: 'cv02','cv03','cv04','cv11';
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Glass effect utility */
+@layer utilities {
+  .glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+  }
+  .glass-hover {
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .glass-hover:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.15);
+  }
+}

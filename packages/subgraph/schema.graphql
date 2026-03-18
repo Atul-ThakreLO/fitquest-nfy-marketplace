@@ -1,0 +1,174 @@
+"""
+Represents a single Territory NFT token on-chain.
+"""
+type Token @entity {
+  " tokenId as string "
+  id: ID!
+
+  " Current owner wallet address "
+  owner: User!
+
+  " Rarity tier: 0=COMMON, 1=RARE, 2=EPIC, 3=LEGENDARY, 4=MYTHIC "
+  rarity: Int!
+
+
+  " IPFS CID for the metadata folder "
+  ipfsCID: String!
+
+  " Whether the org has performed the initial listing; enables free trading once true "
+  firstListed: Boolean!
+
+  " Block timestamp of first mint "
+  mintedAt: BigInt!
+
+  " Transaction hash of mint "
+  mintTxHash: Bytes!
+
+  " Active and past marketplace listings for this token "
+  listings: [Listing!]! @derivedFrom(field: "token")
+
+  " All auctions for this token (MYTHIC only) "
+  auctions: [Auction!]! @derivedFrom(field: "token")
+}
+
+"""
+A fixed-price marketplace listing.
+"""
+type Listing @entity {
+  " {tokenId}-{listingCount} "
+  id: ID!
+
+  " The NFT being listed "
+  token: Token!
+
+  " Seller wallet address "
+  seller: User!
+
+  " Price in wei "
+  price: BigInt!
+
+  " Whether the listing is currently active "
+  active: Boolean!
+
+  " Block timestamp when listing was created "
+  createdAt: BigInt!
+
+  " Block timestamp of last price update "
+  updatedAt: BigInt!
+}
+
+"""
+A record of a completed fixed-price sale.
+"""
+type Sale @entity {
+  " {txHash}-{logIndex} "
+  id: ID!
+
+  " The NFT that was sold "
+  token: Token!
+
+  " Seller wallet address "
+  seller: User!
+
+  " Buyer wallet address "
+  buyer: User!
+
+  " Sale price in wei "
+  price: BigInt!
+
+  " Block timestamp of sale "
+  timestamp: BigInt!
+
+  " Transaction hash "
+  txHash: Bytes!
+}
+
+"""
+An English-style auction for a MYTHIC NFT.
+"""
+type Auction @entity {
+  " auctionId (from contract counter) as string "
+  id: ID!
+
+  " The NFT being auctioned "
+  token: Token!
+
+  " Seller wallet address "
+  seller: User!
+
+  " Starting price in wei "
+  startPrice: BigInt!
+
+  " Current highest bid in wei (0 if no bids) "
+  highestBid: BigInt!
+
+  " Current highest bidder (null if no bids) "
+  highestBidder: User
+
+  " Auction end timestamp (Unix seconds) "
+  endTime: BigInt!
+
+  " Whether the auction has been finalized "
+  finalized: Boolean!
+
+  " Winner wallet (set on finalization) "
+  winner: User
+
+  " Final price (set on finalization) "
+  finalPrice: BigInt
+
+  " Block timestamp when auction was created "
+  createdAt: BigInt!
+
+  " All bids placed on this auction "
+  bids: [Bid!]! @derivedFrom(field: "auction")
+}
+
+"""
+A single bid placed on an auction.
+"""
+type Bid @entity {
+  " {auctionId}-{txHash}-{logIndex} "
+  id: ID!
+
+  " The auction this bid belongs to "
+  auction: Auction!
+
+  " Bidder wallet address "
+  bidder: User!
+
+  " Bid amount in wei "
+  amount: BigInt!
+
+  " Block timestamp of bid "
+  timestamp: BigInt!
+
+  " Transaction hash "
+  txHash: Bytes!
+}
+
+"""
+Represents a unique wallet/user that has interacted with the system.
+"""
+type User @entity {
+  " Wallet address (lowercase hex) "
+  id: ID!
+
+  " Tokens currently owned "
+  tokens: [Token!]! @derivedFrom(field: "owner")
+
+  " All listings created by this user "
+  listings: [Listing!]! @derivedFrom(field: "seller")
+
+  " All sales where this user was the seller "
+  salesAsSeller: [Sale!]! @derivedFrom(field: "seller")
+
+  " All sales where this user was the buyer "
+  salesAsBuyer: [Sale!]! @derivedFrom(field: "buyer")
+
+  " All auctions created by this user "
+  auctions: [Auction!]! @derivedFrom(field: "seller")
+
+  " All bids placed by this user "
+  bids: [Bid!]! @derivedFrom(field: "bidder")
+}

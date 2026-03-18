@@ -1,0 +1,87 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: TerritoryNFT
+    network: base-sepolia
+    source:
+      address: "0x026a01c39C325E8aCED5382d5CA3bE4492C70B13"
+      abi: TerritoryNFT
+      startBlock: 38961985
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Token
+        - User
+      abis:
+        - name: TerritoryNFT
+          file: ./abis/TerritoryNFT.json
+      eventHandlers:
+        - event: TokenMinted(indexed uint256,indexed address,uint8)
+          handler: handleTokenMinted
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: FirstListingMarked(indexed uint256)
+          handler: handleFirstListingMarked
+      file: ./src/territory-nft.ts
+
+  - kind: ethereum
+    name: TerritoryMarketplace
+    network: base-sepolia
+    source:
+      address: "0x643fbbE2Ec01EA8925E35e24d2C3b5Bc4107F20B"
+      abi: TerritoryMarketplace
+      startBlock: 38961985
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Listing
+        - Sale
+        - Token
+        - User
+      abis:
+        - name: TerritoryMarketplace
+          file: ./abis/TerritoryMarketplace.json
+      eventHandlers:
+        - event: Listed(indexed uint256,indexed address,uint256)
+          handler: handleListed
+        - event: Sold(indexed uint256,indexed address,indexed address,uint256)
+          handler: handleSold
+        - event: ListingCancelled(indexed uint256)
+          handler: handleListingCancelled
+        - event: PriceUpdated(indexed uint256,uint256)
+          handler: handlePriceUpdated
+      file: ./src/territory-marketplace.ts
+
+  - kind: ethereum
+    name: TerritoryAuction
+    network: base-sepolia
+    source:
+      address: "0x01273B000C7E9e39A15144F28b0a03655574d6cF"
+      abi: TerritoryAuction
+      startBlock: 38961985
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Auction
+        - Bid
+        - Token
+        - User
+      abis:
+        - name: TerritoryAuction
+          file: ./abis/TerritoryAuction.json
+      eventHandlers:
+        - event: AuctionCreated(indexed uint256,indexed uint256,indexed address,uint256,uint256)
+          handler: handleAuctionCreated
+        - event: BidPlaced(indexed uint256,indexed address,uint256)
+          handler: handleBidPlaced
+        - event: AuctionFinalized(indexed uint256,indexed address,uint256)
+          handler: handleAuctionFinalized
+      file: ./src/territory-auction.ts
