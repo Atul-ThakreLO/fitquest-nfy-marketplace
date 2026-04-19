@@ -13,6 +13,18 @@ import "@openzeppelin/contracts/token/common/ERC2981.sol";
 ///         the first listing (firstListed flag). MYTHIC-tier NFTs can be auctioned.
 contract TerritoryNFT is ERC721URIStorage, AccessControl, ERC2981 {
     // ────────────────────────────────────────────────────────────────────────
+    // Custom errors
+    // ────────────────────────────────────────────────────────────────────────
+
+    error ZeroAdmin();
+    error ZeroMinter();
+    error ZeroTreasury();
+    error EmptyCID();
+    error TokenDoesNotExist(uint256 tokenId);
+    error AlreadyFirstListed(uint256 tokenId);
+    error NotYetFirstListed(uint256 tokenId);
+
+    // ────────────────────────────────────────────────────────────────────────
     // Roles
     // ────────────────────────────────────────────────────────────────────────
 
@@ -41,8 +53,6 @@ contract TerritoryNFT is ERC721URIStorage, AccessControl, ERC2981 {
     /// @notice Full metadata for each minted token
     mapping(uint256 tokenId => TokenData) public tokenData;
 
-
-
     // ────────────────────────────────────────────────────────────────────────
     // Events
     // ────────────────────────────────────────────────────────────────────────
@@ -60,9 +70,9 @@ contract TerritoryNFT is ERC721URIStorage, AccessControl, ERC2981 {
     constructor(address admin, address minter, address orgTreasury)
         ERC721("TerritoryNFT", "TNFT")
     {
-        require(admin != address(0), "TerritoryNFT: zero admin");
-        require(minter != address(0), "TerritoryNFT: zero minter");
-        require(orgTreasury != address(0), "TerritoryNFT: zero treasury");
+        if (admin      == address(0)) revert ZeroAdmin();
+        if (minter     == address(0)) revert ZeroMinter();
+        if (orgTreasury == address(0)) revert ZeroTreasury();
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(MINTER_ROLE, minter);
@@ -85,7 +95,7 @@ contract TerritoryNFT is ERC721URIStorage, AccessControl, ERC2981 {
         Rarity rarity,
         string calldata ipfsCID
     ) external onlyRole(MINTER_ROLE) {
-        require(bytes(ipfsCID).length > 0, "TerritoryNFT: empty CID");
+        if (bytes(ipfsCID).length == 0) revert EmptyCID();
 
         _nextTokenId++;
         uint256 tokenId = _nextTokenId;
@@ -111,8 +121,8 @@ contract TerritoryNFT is ERC721URIStorage, AccessControl, ERC2981 {
     /// @notice Mark a token as firstListed, enabling free trading.
     ///         Only callable by LISTER_ROLE (org backend hot wallet).
     function markFirstListed(uint256 tokenId) external onlyRole(LISTER_ROLE) {
-        require(_ownerOf(tokenId) != address(0), "TerritoryNFT: token does not exist");
-        require(!tokenData[tokenId].firstListed, "TerritoryNFT: already listed");
+        if (_ownerOf(tokenId) == address(0)) revert TokenDoesNotExist(tokenId);
+        if (tokenData[tokenId].firstListed)  revert AlreadyFirstListed(tokenId);
         tokenData[tokenId].firstListed = true;
         emit FirstListingMarked(tokenId);
     }
@@ -123,14 +133,31 @@ contract TerritoryNFT is ERC721URIStorage, AccessControl, ERC2981 {
 
     /// @notice Returns the full TokenData struct for a given token
     function getTokenData(uint256 tokenId) external view returns (TokenData memory) {
-        require(_ownerOf(tokenId) != address(0), "TerritoryNFT: token does not exist");
+        if (_ownerOf(tokenId) == address(0)) revert TokenDoesNotExist(tokenId);
         return tokenData[tokenId];
     }
 
     /// @notice Returns true only if the token's firstListed flag is set
     function isTransferable(uint256 tokenId) external view returns (bool) {
-        require(_ownerOf(tokenId) != address(0), "TerritoryNFT: token does not exist");
+        if (_ownerOf(tokenId) == address(0)) revert TokenDoesNotExist(tokenId);
         return tokenData[tokenId].firstListed;
+    }
+
+    /// @notice Returns LISTER_ROLE status and tokenData in a single call.
+    ///         Used by Marketplace to reduce external call count (avoids two separate interface casts).
+    /// @param role    Role to check (typically LISTER_ROLE)
+    /// @param account Address to check role for
+    /// @param tokenId NFT token ID to read metadata for
+    function hasRoleAndTokenData(bytes32 role, address account, uint256 tokenId)
+        external
+        view
+        returns (bool roleGranted, uint8 rarity, string memory ipfsCid, bool firstListed)
+    {
+        roleGranted = hasRole(role, account);
+        TokenData memory td = tokenData[tokenId];
+        rarity      = uint8(td.rarity);
+        ipfsCid     = td.ipfsCID;
+        firstListed = td.firstListed;
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -150,10 +177,8 @@ contract TerritoryNFT is ERC721URIStorage, AccessControl, ERC2981 {
         if (from != address(0)) {
             // Allow LISTER_ROLE holder to transfer (org initial transfer to marketplace)
             if (!hasRole(LISTER_ROLE, from)) {
-                require(
-                    tokenData[tokenId].firstListed,
-                    "TerritoryNFT: not yet first-listed"
-                );
+                if (!tokenData[tokenId].firstListed)
+                    revert NotYetFirstListed(tokenId);
             }
         }
 

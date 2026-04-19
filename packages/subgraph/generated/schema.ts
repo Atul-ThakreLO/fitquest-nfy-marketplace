@@ -215,6 +215,19 @@ export class Listing extends Entity {
     this.set("price", Value.fromBigInt(value));
   }
 
+  get currency(): string {
+    let value = this.get("currency");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
+  }
+
+  set currency(value: string) {
+    this.set("currency", Value.fromString(value));
+  }
+
   get active(): boolean {
     let value = this.get("active");
     if (!value || value.kind == ValueKind.NULL) {
@@ -344,6 +357,45 @@ export class Sale extends Entity {
 
   set price(value: BigInt) {
     this.set("price", Value.fromBigInt(value));
+  }
+
+  get royaltyAmount(): BigInt {
+    let value = this.get("royaltyAmount");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set royaltyAmount(value: BigInt) {
+    this.set("royaltyAmount", Value.fromBigInt(value));
+  }
+
+  get royaltyCapped(): boolean {
+    let value = this.get("royaltyCapped");
+    if (!value || value.kind == ValueKind.NULL) {
+      return false;
+    } else {
+      return value.toBoolean();
+    }
+  }
+
+  set royaltyCapped(value: boolean) {
+    this.set("royaltyCapped", Value.fromBoolean(value));
+  }
+
+  get currency(): string {
+    let value = this.get("currency");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
+  }
+
+  set currency(value: string) {
+    this.set("currency", Value.fromString(value));
   }
 
   get timestamp(): BigInt {
@@ -541,6 +593,19 @@ export class Auction extends Entity {
     }
   }
 
+  get currency(): string {
+    let value = this.get("currency");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
+  }
+
+  set currency(value: string) {
+    this.set("currency", Value.fromString(value));
+  }
+
   get createdAt(): BigInt {
     let value = this.get("createdAt");
     if (!value || value.kind == ValueKind.NULL) {
@@ -635,6 +700,19 @@ export class Bid extends Entity {
 
   set amount(value: BigInt) {
     this.set("amount", Value.fromBigInt(value));
+  }
+
+  get currency(): string {
+    let value = this.get("currency");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
+  }
+
+  set currency(value: string) {
+    this.set("currency", Value.fromString(value));
   }
 
   get timestamp(): BigInt {

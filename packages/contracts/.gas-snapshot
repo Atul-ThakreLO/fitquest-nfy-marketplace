@@ -1,4 +1,4 @@
-CounterTest:testFuzz_SetNumber(uint256) (runs: 256, μ: 27579, ~: 28435)
+CounterTest:testFuzz_SetNumber(uint256) (runs: 256, μ: 27657, ~: 28435)
 CounterTest:test_Increment() (gas: 28448)
 GasBaseline:test_gas_bid() (gas: 365831)
 GasBaseline:test_gas_bidWithETH() (gas: 384378)

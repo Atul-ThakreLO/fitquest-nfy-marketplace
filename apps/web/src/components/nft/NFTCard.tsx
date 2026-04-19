@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Rarity } from 'territory-nft-shared'
 import { RarityBadge } from './RarityBadge'
 import { RARITY_GLOW } from '@/constants/rarity'
-import { resolveIPFS, formatEth, resolveImageIPFS } from '@/lib/utils'
+import { resolveIPFS, formatUsdc, resolveImageIPFS } from '@/lib/utils'
 import type { TokenInfo, Listing } from '@/types'
 import { useEffect, useState } from 'react'
 import { useNFT } from '@/hooks/useNFT'
@@ -55,7 +55,7 @@ export function NFTCard({ token, listing, metadata }: NFTCardProps) {
         </div>
 
         {listing ? (
-          <p className="text-sm font-bold text-orange-400">{formatEth(listing.price, 3)}</p>
+          <p className="text-sm font-bold text-orange-400">{formatUsdc(listing.price, 3)}</p>
         ) : (
           <p className="text-xs text-zinc-600 italic">Not listed</p>
         )}

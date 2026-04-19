@@ -43,6 +43,8 @@ export function NFTGrid() {
     setPage(0)
   }
 
+  
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -94,7 +96,7 @@ export function NFTGrid() {
             {listings.map(listing => (
               <NFTCard
                 key={listing.tokenId.toString()}
-                token={{ tokenId: listing.tokenId, rarity: Rarity.COMMON, ipfsCID: "", firstListed: true, owner: listing.seller }}
+                token={{ tokenId: listing.tokenId, rarity: listing.rarity, ipfsCID: "", firstListed: true, owner: listing.seller }}
                 listing={listing}
               />
             ))}

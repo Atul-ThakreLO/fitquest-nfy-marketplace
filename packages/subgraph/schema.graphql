@@ -44,8 +44,11 @@ type Listing @entity {
   " Seller wallet address "
   seller: User!
 
-  " Price in wei "
+  " Price in USDC micro-units (6 decimals) "
   price: BigInt!
+
+  " Payment currency (always USDC) "
+  currency: String!
 
   " Whether the listing is currently active "
   active: Boolean!
@@ -73,8 +76,17 @@ type Sale @entity {
   " Buyer wallet address "
   buyer: User!
 
-  " Sale price in wei "
+  " Sale price in USDC micro-units (6 decimals) "
   price: BigInt!
+
+  " Royalty amount paid in USDC micro-units "
+  royaltyAmount: BigInt!
+
+  " Whether the royalty was capped at 15% "
+  royaltyCapped: Boolean!
+
+  " Payment currency (always USDC) "
+  currency: String!
 
   " Block timestamp of sale "
   timestamp: BigInt!
@@ -96,10 +108,10 @@ type Auction @entity {
   " Seller wallet address "
   seller: User!
 
-  " Starting price in wei "
+  " Starting price in USDC micro-units (6 decimals) "
   startPrice: BigInt!
 
-  " Current highest bid in wei (0 if no bids) "
+  " Current highest bid in USDC micro-units (0 if no bids) "
   highestBid: BigInt!
 
   " Current highest bidder (null if no bids) "
@@ -114,8 +126,11 @@ type Auction @entity {
   " Winner wallet (set on finalization) "
   winner: User
 
-  " Final price (set on finalization) "
+  " Final price in USDC micro-units (set on finalization) "
   finalPrice: BigInt
+
+  " Payment currency (always USDC) "
+  currency: String!
 
   " Block timestamp when auction was created "
   createdAt: BigInt!
@@ -137,8 +152,11 @@ type Bid @entity {
   " Bidder wallet address "
   bidder: User!
 
-  " Bid amount in wei "
+  " Bid amount in USDC micro-units (6 decimals) "
   amount: BigInt!
+
+  " Payment currency (always USDC) "
+  currency: String!
 
   " Block timestamp of bid "
   timestamp: BigInt!

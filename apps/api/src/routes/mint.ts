@@ -58,8 +58,9 @@ export const mintRoutes = (contractService: ContractService) => new Elysia({ pre
       }
 
       try {
-        // Step 1: Decode base64 → Buffer
-        const imageBuffer = Buffer.from(body.imageBase64, 'base64')
+        // Step 1: Decode base64 → Buffer (strip the data URI scheme first)
+        const base64Data = body.imageBase64.replace(/^data:image\/\w+(\+xml)?;base64,/, '')
+        const imageBuffer = Buffer.from(base64Data, 'base64')
 
         // Step 2: Upload assets to Pinata
         updateJob('uploading')

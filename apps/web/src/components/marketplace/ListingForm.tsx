@@ -31,14 +31,14 @@ export function ListingForm({ tokenId }: ListingFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-xs text-zinc-400 mb-1.5" htmlFor="listing-price">
-          Listing Price (ETH)
+          Listing Price (USDC)
         </label>
         <input
           id="listing-price"
           type="number"
-          step="0.001"
-          min="0.001"
-          placeholder="0.00"
+          step="1"
+          min="1"
+          placeholder="10"
           value={price}
           onChange={e => setPrice(e.target.value)}
           disabled={isProcessing || step === 'done'}

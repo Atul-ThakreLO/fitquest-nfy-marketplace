@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from 'date-fns'
-import { formatEther } from 'viem'
+import { formatEther, formatUnits } from 'viem'
 
 export function resolveIPFS(cid: string, path = ''): string {
   const gateway = process.env.NEXT_PUBLIC_PINATA_GATEWAY ?? 'https://gateway.pinata.cloud'
@@ -17,8 +17,16 @@ export async function resolveImageIPFS(metaDataURL: string) {
 
 export function formatEth(wei: bigint, decimals = 4): string {
   const eth = Number(formatEther(wei))
-  // return `${eth.toFixed(decimals)} ETH`
-  return eth.toString();
+  return eth.toFixed(decimals)
+}
+
+/**
+ * Format USDC micro-units (6 decimals) to a human-readable string.
+ * e.g. 10_000_000n → "10.00 USDC"
+ */
+export function formatUsdc(units: bigint, decimals = 2): string {
+  const value = Number(formatUnits(units, 6))
+  return `${value.toFixed(decimals)} USDC`
 }
 
 export function truncateAddress(address: string, chars = 4): string {

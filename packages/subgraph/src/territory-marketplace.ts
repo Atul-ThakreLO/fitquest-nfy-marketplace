@@ -1,10 +1,12 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 import {
+  TerritoryMarketplace as TerritoryMarketplaceContract,
   Listed as ListedEvent,
   Sold as SoldEvent,
   ListingCancelled as ListingCancelledEvent,
   PriceUpdated as PriceUpdatedEvent,
 } from "../generated/TerritoryMarketplace/TerritoryMarketplace";
+import { TerritoryNFT as TerritoryNFTContract } from "../generated/TerritoryNFT/TerritoryNFT";
 import { Listing, Sale } from "../generated/schema";
 import { loadOrCreateUser } from "./helpers";
 
@@ -31,6 +33,7 @@ export function handleListed(event: ListedEvent): void {
   listing.token = tokenId.toString();
   listing.seller = sellerId;
   listing.price = event.params.price;
+  listing.currency = "USDC";
   listing.active = true;
   listing.createdAt = event.block.timestamp;
   listing.updatedAt = event.block.timestamp;
@@ -65,8 +68,45 @@ export function handleSold(event: SoldEvent): void {
   sale.seller = sellerId;
   sale.buyer = buyerId;
   sale.price = event.params.price;
+  sale.currency = "USDC";
   sale.timestamp = event.block.timestamp;
   sale.txHash = event.transaction.hash;
+
+  // Marketplace does not emit royalty values in the `Sold` event, so
+  // we compute them at indexing time via the NFT's ERC-2981 royaltyInfo().
+  // We also apply the same 15% cap as the contract (MAX_ROYALTY_BPS=1500).
+  let marketplace = TerritoryMarketplaceContract.bind(event.address);
+  let nftAddress = marketplace.nftContract();
+  let nft = TerritoryNFTContract.bind(nftAddress);
+
+  let royaltyAmount = BigInt.fromI32(0);
+  let royaltyCapped = false;
+  let royaltyCall = nft.try_royaltyInfo(tokenId, event.params.price);
+
+  if (!royaltyCall.reverted) {
+    // ERC-2981 returns (receiver, amount)
+    let computed = royaltyCall.value.value1;
+
+    // maxRoyalty = salePrice * 1500 / 10000
+    let maxRoyalty = event.params.price
+      .times(BigInt.fromI32(1500))
+      .div(BigInt.fromI32(10000));
+
+    if (computed.gt(maxRoyalty)) {
+      royaltyAmount = maxRoyalty;
+      royaltyCapped = true;
+    } else {
+      royaltyAmount = computed;
+    }
+  } else {
+    log.warning(
+      "royaltyInfo reverted for tokenId {}",
+      [tokenId.toString()]
+    );
+  }
+
+  sale.royaltyAmount = royaltyAmount;
+  sale.royaltyCapped = royaltyCapped;
 
   sale.save();
 }

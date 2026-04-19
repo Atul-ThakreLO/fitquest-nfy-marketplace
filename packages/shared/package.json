@@ -15,7 +15,7 @@
   },
   "scripts": {
     "type-check": "tsc --noEmit",
-    "sync-abis": "jq '.abi' ../contracts/out/TerritoryNFT.sol/TerritoryNFT.json > ./src/abis/TerritoryNFT.json && jq '.abi' ../contracts/out/TerritoryMarketplace.sol/TerritoryMarketplace.json > ./src/abis/TerritoryMarketplace.json && jq '.abi' ../contracts/out/TerritoryAuction.sol/TerritoryAuction.json > ./src/abis/TerritoryAuction.json"
+    "sync-abis": "jq '.abi' ../contracts/out/TerritoryNFT.sol/TerritoryNFT.json | tee ./src/abis/TerritoryNFT.json > ../subgraph/abis/TerritoryNFT.json && jq '.abi' ../contracts/out/TerritoryMarketplace.sol/TerritoryMarketplace.json | tee ./src/abis/TerritoryMarketplace.json > ../subgraph/abis/TerritoryMarketplace.json && jq '.abi' ../contracts/out/TerritoryAuction.sol/TerritoryAuction.json | tee ./src/abis/TerritoryAuction.json > ../subgraph/abis/TerritoryAuction.json"
   },
   "devDependencies": {
     "typescript": "^5.4.5"

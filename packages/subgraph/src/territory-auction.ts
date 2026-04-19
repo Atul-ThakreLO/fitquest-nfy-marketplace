@@ -3,6 +3,8 @@ import {
   AuctionCreated as AuctionCreatedEvent,
   BidPlaced as BidPlacedEvent,
   AuctionFinalized as AuctionFinalizedEvent,
+  AuctionCancelled as AuctionCancelledEvent,
+  AuctionCancelledNoBids as AuctionCancelledNoBidsEvent,
 } from "../generated/TerritoryAuction/TerritoryAuction";
 import { Auction, Bid } from "../generated/schema";
 import { loadOrCreateUser } from "./helpers";
@@ -29,6 +31,7 @@ export function handleAuctionCreated(event: AuctionCreatedEvent): void {
   auction.finalized = false;
   auction.winner = null;
   auction.finalPrice = null;
+  auction.currency = "USDC";
   auction.createdAt = event.block.timestamp;
 
   auction.save();
@@ -57,6 +60,7 @@ export function handleBidPlaced(event: BidPlacedEvent): void {
   bid.auction = auctionId.toString();
   bid.bidder = bidderId;
   bid.amount = amount;
+  bid.currency = "USDC";
   bid.timestamp = event.block.timestamp;
   bid.txHash = event.transaction.hash;
 
@@ -88,5 +92,31 @@ export function handleAuctionFinalized(event: AuctionFinalizedEvent): void {
   auction.winner = winnerId;
   auction.finalPrice = event.params.finalPrice;
 
+  auction.save();
+}
+
+/**
+ * Handle AuctionCancelled event — marks the Auction as finalized.
+ */
+export function handleAuctionCancelled(event: AuctionCancelledEvent): void {
+  let auctionId = event.params.auctionId;
+
+  let auction = Auction.load(auctionId.toString());
+  if (auction == null) return;
+
+  auction.finalized = true;
+  auction.save();
+}
+
+/**
+ * Handle AuctionCancelledNoBids event — marks the Auction as finalized.
+ */
+export function handleAuctionCancelledNoBids(event: AuctionCancelledNoBidsEvent): void {
+  let auctionId = event.params.auctionId;
+
+  let auction = Auction.load(auctionId.toString());
+  if (auction == null) return;
+
+  auction.finalized = true;
   auction.save();
 }

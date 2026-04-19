@@ -1,7 +1,7 @@
 import {
   Account,
   getContract,
-  parseEther
+  parseUnits
 } from 'viem'
 import TerritoryNFTAbi from 'territory-nft-shared/abis/TerritoryNFT.json'
 import TerritoryMarketplaceAbi from 'territory-nft-shared/abis/TerritoryMarketplace.json'
@@ -21,17 +21,17 @@ export class ContractService {
   ) {
     this.nft = getContract({
       address: config.nftContractAddress,
-      abi: TerritoryNFTAbi.abi,
+      abi: TerritoryNFTAbi,
       client: { public: this.publicClient, wallet: this.walletClient },
     }) as any
     this.marketplace = getContract({
       address: config.marketplaceContractAddress,
-      abi: TerritoryMarketplaceAbi.abi,
+      abi: TerritoryMarketplaceAbi,
       client: { public: this.publicClient, wallet: this.walletClient },
     }) as any
     this.auction = getContract({
       address: config.auctionContractAddress,
-      abi: TerritoryAuctionAbi.abi,
+      abi: TerritoryAuctionAbi,
       client: { public: this.publicClient, wallet: this.walletClient },
     }) as any
   }
@@ -71,6 +71,7 @@ export class ContractService {
     const data = await this.marketplace.read.getListing([tokenId]) as { seller: string; price: bigint; active: boolean }
     return {
       tokenId,
+      rarity: 0,
       seller: data.seller as `0x${string}`,
       price: data.price,
       active: data.active,
@@ -78,31 +79,79 @@ export class ContractService {
     }
   }
 
-  async createListing(tokenId: bigint, priceEth: string): Promise<`0x${string}`> {
-    return this.marketplace.write.createListing([tokenId, parseEther(priceEth)], { account: this.account }) as Promise<`0x${string}`>
+  async canList(tokenId: bigint, user: string): Promise<boolean> {
+    return this.marketplace.read.canList([tokenId, user]) as Promise<boolean>
+  }
+
+  async canBuy(tokenId: bigint, buyer: string): Promise<boolean> {
+    return this.marketplace.read.canBuy([tokenId, buyer]) as Promise<boolean>
+  }
+
+  async createListing(tokenId: bigint, priceUsdc: string): Promise<`0x${string}`> {
+    return this.marketplace.write.createListing([tokenId, parseUnits(priceUsdc, 6)], { account: this.account }) as Promise<`0x${string}`>
   }
 
   // ── Auction reads/writes ──────────────────────────────────────────────────
+
+  // async createAuction(tokenId: number, price: number, duration: number) {
+  //   this.auction.write.createAuction();
+  // }
+
   async getAuction(auctionId: bigint): Promise<Auction> {
-    const data = await this.auction.read.getAuction([auctionId]) as {
-      tokenId: bigint;
-      seller: string;
-      startPrice: bigint;
-      highestBidder: string;
-      highestBid: bigint;
-      endTime: bigint;
-      finalized: boolean;
-    }
+    // Note: use the public mapping 'auctions' as 'getAuction' view is not present in the deployed contract
+    const data = await this.auction.read.auctions([auctionId]) as [
+      string, // seller
+      bigint, // tokenId
+      bigint, // startPrice
+      bigint, // highestBid
+      string, // highestBidder
+      bigint, // endTime
+      boolean // finalized
+    ]
     return {
       auctionId,
-      tokenId: data.tokenId,
-      seller: data.seller as `0x${string}`,
-      startPrice: data.startPrice,
-      highestBidder: data.highestBidder as `0x${string}`,
-      highestBid: data.highestBid,
-      endTime: Number(data.endTime),
-      finalized: data.finalized,
+      seller: data[0] as `0x${string}`,
+      tokenId: data[1],
+      startPrice: data[2],
+      highestBid: data[3],
+      highestBidder: data[4] as `0x${string}`,
+      endTime: Number(data[5]),
+      finalized: data[6],
     }
+  }
+
+  async canCreateAuction(tokenId: bigint, user: string): Promise<boolean> {
+    const owner = await this.ownerOf(tokenId)
+    if (owner.toLowerCase() !== user.toLowerCase()) return false
+
+    // Check approval
+    const isApprovedForAll = await this.nft.read.isApprovedForAll([user, config.auctionContractAddress]) as boolean
+    if (!isApprovedForAll) {
+      const approved = await this.nft.read.getApproved([tokenId]) as string
+      if (approved.toLowerCase() !== config.auctionContractAddress.toLowerCase()) return false
+    }
+
+    // Check rarity and firstListed
+    const data = await this.nft.read.tokenData([tokenId]) as { rarity: number; firstListed: boolean }
+    if (Number(data.rarity) !== 4) return false // MYTHIC
+    if (!data.firstListed) return false
+
+    return true
+  }
+
+  async canBid(auctionId: bigint, bidder: string, amount: bigint): Promise<boolean> {
+    const auction = await this.getAuction(auctionId)
+    if (auction.finalized) return false
+    if (Date.now() / 1000 >= auction.endTime) return false
+    if (bidder.toLowerCase() === auction.seller.toLowerCase()) return false
+
+    let minBid: bigint
+    if (auction.highestBidder === '0x0000000000000000000000000000000000000000') {
+      minBid = auction.startPrice
+    } else {
+      minBid = auction.highestBid + (auction.highestBid * 5n) / 100n
+    }
+    return amount >= minBid
   }
 
   async finalizeAuction(auctionId: bigint): Promise<`0x${string}`> {
@@ -112,5 +161,12 @@ export class ContractService {
   // ── Shared utility ────────────────────────────────────────────────────────
   async waitForTransaction(txHash: `0x${string}`) {
     return this.publicClient.waitForTransactionReceipt({ hash: txHash })
+  }
+
+  computeCappedRoyalty(price: bigint, royaltyBps: number): bigint {
+    const MAX_BPS = 1500n
+    const raw = (price * BigInt(royaltyBps)) / 10000n
+    const cap = (price * MAX_BPS) / 10000n
+    return raw > cap ? cap : raw
   }
 }

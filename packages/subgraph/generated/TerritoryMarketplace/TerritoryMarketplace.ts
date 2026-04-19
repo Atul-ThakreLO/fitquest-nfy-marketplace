@@ -157,6 +157,71 @@ export class TerritoryMarketplace extends ethereum.SmartContract {
     return new TerritoryMarketplace("TerritoryMarketplace", address);
   }
 
+  MAX_ROYALTY_BPS(): BigInt {
+    let result = super.call(
+      "MAX_ROYALTY_BPS",
+      "MAX_ROYALTY_BPS():(uint256)",
+      [],
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_MAX_ROYALTY_BPS(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "MAX_ROYALTY_BPS",
+      "MAX_ROYALTY_BPS():(uint256)",
+      [],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
+  canBuy(tokenId: BigInt, buyer: Address): boolean {
+    let result = super.call("canBuy", "canBuy(uint256,address):(bool)", [
+      ethereum.Value.fromUnsignedBigInt(tokenId),
+      ethereum.Value.fromAddress(buyer),
+    ]);
+
+    return result[0].toBoolean();
+  }
+
+  try_canBuy(tokenId: BigInt, buyer: Address): ethereum.CallResult<boolean> {
+    let result = super.tryCall("canBuy", "canBuy(uint256,address):(bool)", [
+      ethereum.Value.fromUnsignedBigInt(tokenId),
+      ethereum.Value.fromAddress(buyer),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
+  canList(tokenId: BigInt, user: Address): boolean {
+    let result = super.call("canList", "canList(uint256,address):(bool)", [
+      ethereum.Value.fromUnsignedBigInt(tokenId),
+      ethereum.Value.fromAddress(user),
+    ]);
+
+    return result[0].toBoolean();
+  }
+
+  try_canList(tokenId: BigInt, user: Address): ethereum.CallResult<boolean> {
+    let result = super.tryCall("canList", "canList(uint256,address):(bool)", [
+      ethereum.Value.fromUnsignedBigInt(tokenId),
+      ethereum.Value.fromAddress(user),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+
   getListing(
     tokenId: BigInt,
   ): TerritoryMarketplace__getListingResultValue0Struct {
@@ -262,6 +327,21 @@ export class TerritoryMarketplace extends ethereum.SmartContract {
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
+
+  usdc(): Address {
+    let result = super.call("usdc", "usdc():(address)", []);
+
+    return result[0].toAddress();
+  }
+
+  try_usdc(): ethereum.CallResult<Address> {
+    let result = super.tryCall("usdc", "usdc():(address)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
 }
 
 export class ConstructorCall extends ethereum.Call {
@@ -285,8 +365,12 @@ export class ConstructorCall__Inputs {
     return this._call.inputValues[0].value.toAddress();
   }
 
-  get _royaltyReceiver(): Address {
+  get _usdc(): Address {
     return this._call.inputValues[1].value.toAddress();
+  }
+
+  get _royaltyReceiver(): Address {
+    return this._call.inputValues[2].value.toAddress();
   }
 }
 
@@ -324,6 +408,40 @@ export class BuyListingCall__Outputs {
   _call: BuyListingCall;
 
   constructor(call: BuyListingCall) {
+    this._call = call;
+  }
+}
+
+export class BuyListingForCall extends ethereum.Call {
+  get inputs(): BuyListingForCall__Inputs {
+    return new BuyListingForCall__Inputs(this);
+  }
+
+  get outputs(): BuyListingForCall__Outputs {
+    return new BuyListingForCall__Outputs(this);
+  }
+}
+
+export class BuyListingForCall__Inputs {
+  _call: BuyListingForCall;
+
+  constructor(call: BuyListingForCall) {
+    this._call = call;
+  }
+
+  get tokenId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get recipient(): Address {
+    return this._call.inputValues[1].value.toAddress();
+  }
+}
+
+export class BuyListingForCall__Outputs {
+  _call: BuyListingForCall;
+
+  constructor(call: BuyListingForCall) {
     this._call = call;
   }
 }

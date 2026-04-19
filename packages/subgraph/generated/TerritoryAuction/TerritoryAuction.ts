@@ -269,6 +269,29 @@ export class TerritoryAuction extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
+  MAX_ROYALTY_BPS(): BigInt {
+    let result = super.call(
+      "MAX_ROYALTY_BPS",
+      "MAX_ROYALTY_BPS():(uint256)",
+      [],
+    );
+
+    return result[0].toBigInt();
+  }
+
+  try_MAX_ROYALTY_BPS(): ethereum.CallResult<BigInt> {
+    let result = super.tryCall(
+      "MAX_ROYALTY_BPS",
+      "MAX_ROYALTY_BPS():(uint256)",
+      [],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBigInt());
+  }
+
   MIN_BID_INCREMENT_PERCENT(): i32 {
     let result = super.call(
       "MIN_BID_INCREMENT_PERCENT",
@@ -384,6 +407,49 @@ export class TerritoryAuction extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
+  onERC721Received(
+    param0: Address,
+    param1: Address,
+    param2: BigInt,
+    param3: Bytes,
+  ): Bytes {
+    let result = super.call(
+      "onERC721Received",
+      "onERC721Received(address,address,uint256,bytes):(bytes4)",
+      [
+        ethereum.Value.fromAddress(param0),
+        ethereum.Value.fromAddress(param1),
+        ethereum.Value.fromUnsignedBigInt(param2),
+        ethereum.Value.fromBytes(param3),
+      ],
+    );
+
+    return result[0].toBytes();
+  }
+
+  try_onERC721Received(
+    param0: Address,
+    param1: Address,
+    param2: BigInt,
+    param3: Bytes,
+  ): ethereum.CallResult<Bytes> {
+    let result = super.tryCall(
+      "onERC721Received",
+      "onERC721Received(address,address,uint256,bytes):(bytes4)",
+      [
+        ethereum.Value.fromAddress(param0),
+        ethereum.Value.fromAddress(param1),
+        ethereum.Value.fromUnsignedBigInt(param2),
+        ethereum.Value.fromBytes(param3),
+      ],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBytes());
+  }
+
   pendingReturns(param0: Address, param1: BigInt): BigInt {
     let result = super.call(
       "pendingReturns",
@@ -438,6 +504,21 @@ export class TerritoryAuction extends ethereum.SmartContract {
     let value = result.value;
     return ethereum.CallResult.fromValue(value[0].toAddress());
   }
+
+  usdc(): Address {
+    let result = super.call("usdc", "usdc():(address)", []);
+
+    return result[0].toAddress();
+  }
+
+  try_usdc(): ethereum.CallResult<Address> {
+    let result = super.tryCall("usdc", "usdc():(address)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
 }
 
 export class ConstructorCall extends ethereum.Call {
@@ -461,8 +542,12 @@ export class ConstructorCall__Inputs {
     return this._call.inputValues[0].value.toAddress();
   }
 
-  get _royaltyReceiver(): Address {
+  get _usdc(): Address {
     return this._call.inputValues[1].value.toAddress();
+  }
+
+  get _royaltyReceiver(): Address {
+    return this._call.inputValues[2].value.toAddress();
   }
 }
 
@@ -494,12 +579,54 @@ export class BidCall__Inputs {
   get auctionId(): BigInt {
     return this._call.inputValues[0].value.toBigInt();
   }
+
+  get amount(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
 }
 
 export class BidCall__Outputs {
   _call: BidCall;
 
   constructor(call: BidCall) {
+    this._call = call;
+  }
+}
+
+export class BidForCall extends ethereum.Call {
+  get inputs(): BidForCall__Inputs {
+    return new BidForCall__Inputs(this);
+  }
+
+  get outputs(): BidForCall__Outputs {
+    return new BidForCall__Outputs(this);
+  }
+}
+
+export class BidForCall__Inputs {
+  _call: BidForCall;
+
+  constructor(call: BidForCall) {
+    this._call = call;
+  }
+
+  get auctionId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get amount(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
+  }
+
+  get bidder(): Address {
+    return this._call.inputValues[2].value.toAddress();
+  }
+}
+
+export class BidForCall__Outputs {
+  _call: BidForCall;
+
+  constructor(call: BidForCall) {
     this._call = call;
   }
 }

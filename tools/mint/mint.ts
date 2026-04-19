@@ -38,8 +38,8 @@ interface MintApiPayload {
   minterAddress: string,
   name: string
   description: string
-  imageBase64: string | null
-  listingPrice: string
+  imageBase64: string
+  listPrice: string
   attributes: AttributeRow[]
 }
 
@@ -128,10 +128,10 @@ function validateRequired(val: string): true | string {
   return val?.trim().length > 0 ? true : 'This field is required.'
 }
 
-function validateEth(val: string): true | string {
+function validatePrice(val: string): true | string {
   if (!val || val.trim() === '') return true // optional field
   const n = parseFloat(val)
-  if (isNaN(n) || n < 0) return 'Enter a valid non-negative ETH amount (e.g. 0.05)'
+  if (isNaN(n) || n < 0) return 'Enter a valid non-negative amount (e.g. 10.50)'
   return true
 }
 
@@ -150,7 +150,7 @@ function renderSummary(payload: MintPayload, adminToken: string): void {
   console.log(chalk.cyan('  Image:        ') + chalk.white(payload._imagePath ?? chalk.dim('(no image)')))
   console.log(
     chalk.cyan('  Listing Price:') +
-    chalk.white(payload.listingPrice ? `${payload.listingPrice} ETH` : chalk.dim('(not set)'))
+    chalk.white(payload.listPrice ? `${payload.listPrice} USDC` : chalk.dim('(not set)'))
   )
   console.log(chalk.cyan('  Minter:       ') + chalk.white(payload.minterAddress))
   if (payload.attributes.length > 0) {
@@ -169,13 +169,17 @@ function renderSummary(payload: MintPayload, adminToken: string): void {
 
 // ─── Polling ──────────────────────────────────────────────────────────────────
 
-async function pollStatus(apiUrl: string, jobId: string): Promise<JobStatusData> {
+async function pollStatus(apiUrl: string, jobId: string, adminToken: string): Promise<JobStatusData> {
   const spinner = ora({ text: 'Waiting for job to start…', color: 'yellow' }).start()
 
   return new Promise<JobStatusData>((resolve, reject) => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${apiUrl}/admin/mint/${jobId}/status`)
+        const res = await fetch(`${apiUrl}/admin/mint-jobs/${jobId}`, {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        })
         if (!res.ok) throw new Error(`Status check returned HTTP ${res.status}`)
 
         const json = (await res.json()) as { data?: JobStatusData }
@@ -341,8 +345,8 @@ async function main(): Promise<void> {
     {
       type: 'input',
       name: 'listingPrice',
-      message: chalk.cyan('  Listing Price (ETH)') + chalk.dim(' (optional, e.g. 0.05):'),
-      validate: validateEth,
+      message: chalk.cyan('  Listing Price (USDC)') + chalk.dim(' (optional, e.g. 10.50):'),
+      validate: validatePrice,
     },
   ])
 
@@ -373,8 +377,8 @@ async function main(): Promise<void> {
     name: name.trim(),
     minterAddress: minterAddress.trim(),
     description: description.trim(),
-    imageBase64,
-    listingPrice: listingPrice.trim(),
+    imageBase64: imageBase64 ?? '',
+    listPrice: listingPrice.trim(),
     attributes,
     _imagePath: imagePath?.trim() || null,
     _apiUrl: apiUrl.trim(),
@@ -406,7 +410,7 @@ async function main(): Promise<void> {
     name: payload.name,
     description: payload.description,
     imageBase64: payload.imageBase64,
-    listingPrice: payload.listingPrice,
+    listPrice: payload.listPrice,
     attributes: payload.attributes,
   }
 
@@ -442,7 +446,7 @@ async function main(): Promise<void> {
 
   // ── 9. Poll ───────────────────────────────────────────────────────────────
   try {
-    const result = await pollStatus(payload._apiUrl, jobId)
+    const result = await pollStatus(payload._apiUrl, jobId, adminToken)
 
     const nftContract =
       Bun.env.NFT_CONTRACT_ADDRESS ?? Bun.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS ?? null

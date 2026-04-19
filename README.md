@@ -4,6 +4,12 @@ A complete Web3 DApp for minting, trading, and auctioning Territory NFTs on the 
 
 ## 📋 Table of Contents
 
+TerritoryNFT: 0x6c9F32c9cec98Ccb78eB2382aCBB268801FD6941
+TerritoryMarketplace: 0xCA62A34eF6C49e8604Ca88A72A7cb6E2D4A101a9
+TerritoryAuction: 0xaEb4F9E488F8B8315CE799a65cC217775acB3282
+TerritoryPaymentRouter: 0x1aE62E2368F4D8ADF61151D5fAf32dF493aF5657
+USDC (payment token): 0x036CbD53842c5426634e7929541eC2318f3dCF7e
+
 - [Overview](#overview)
 - [Architecture](#architecture)
 - [Smart Contracts](#smart-contracts)
@@ -19,6 +25,7 @@ A complete Web3 DApp for minting, trading, and auctioning Territory NFTs on the 
 Territory NFT Marketplace is an end-to-end decentralized application that digitizes geographic regions into unique, tradable assets. Built for scalability, the platform empowers administrators to seamlessly mint new territorial tiles on the Base blockchain as ERC-721 tokens, complete with IPFS-hosted metadata. Through an intuitive web portal, everyday users can securely connect their Web3 wallets to browse active listings, purchase regular tiles at fixed prices, or participate in competitive English-style auctions for exclusive `MYTHIC`-tier regional tiles.
 
 **Token Characteristics:**
+
 - **Standard**: ERC-721
 - **Network**: Base (Sepolia for testing)
 - **Rarity System**: `COMMON`, `RARE`, `EPIC`, `LEGENDARY`, `MYTHIC`
@@ -60,28 +67,42 @@ This project is built as a Turborepo monorepo using Bun, separated into independ
 The smart contracts are written in Solidity `^0.8.24` and leverage OpenZeppelin standards.
 
 ### 1. TerritoryNFT.sol
+
 The core ERC-721 token representing geographic regions.
+
 - **Minting**: Restricted to the `MINTER_ROLE`.
 - **First-Listing Lock**: Transfers are locked until the organization performs the initial listing (`firstListed` flag), ensuring a controlled primary market.
 - **Metadata**: IPFS CIDs are natively stored on-chain.
 
 ### 2. TerritoryMarketplace.sol
+
 A decentralized fixed-price trading platform.
+
 - **Listings**: Users (and the org) can create, update, and cancel fixed-price listings.
 - **Purchasing**: Executes atomic NFT swaps and ETH transfers.
 - **Royalties**: Automatically calculates and distributes the 5% ERC-2981 royalty upon sale.
 
 ### 3. TerritoryAuction.sol
+
 An English-style auction contract exclusively for `MYTHIC` tier NFTs.
+
 - **Bidding Rules**: Includes a 5% minimum bid increment.
 - **Anti-Sniping**: Automatically extends the auction by 10 minutes if a bid is placed in the final 10 minutes.
 - **Escrow & Refunds**: Securely tracks outbid amounts as pending returns for safe withdrawal by participants.
+
+### Recent Gas Optimizations
+
+- **Royalty Cap**: Royalties are securely capped at **15%** across all sales and auction finalizations to prevent arithmetic underflows and associated gas spikes.
+- **Safe Transfers**: `transferFrom` (instead of `safeTransferFrom`) is used for NFT delivery to prevent unpredictable unbounded gas costs from arbitrary `onERC721Received` hooks. (Recipients requiring the receiver hook must wrap their purchase).
+- **Payment Router Deadlines**: `buyListingWithETH` and `bidWithETH` functions now strictly require a `deadline` (UNIX timestamp) to prevent stale transactions in the mempool.
+- **Role Permissions**: `TerritoryAuction` now inherently holds the `LISTER_ROLE` on the `TerritoryNFT` contract to safely bypass initial transfer guard checks seamlessly.
 
 ## Backend API
 
 The backend API is powered by **Elysia** and running on **Bun**. It connects to **Postgres** and **Redis** (via Docker) to serve fast marketplace data.
 
 **Key Routes:**
+
 - `POST /admin/mint`: Full pipeline to upload images to IPFS (via Pinata), mint the NFT on-chain, and automatically list it on the marketplace.
 - `GET /marketplace/listings`: Retrieves paginated active marketplace listings, powered by a 30-second Redis cache.
 - `POST /marketplace/webhook`: Invalidates Redis caches upon `Listed`, `Sold`, or `Cancelled` smart contract events.
@@ -91,6 +112,7 @@ The backend API is powered by **Elysia** and running on **Bun**. It connects to 
 ## Frontend Web App
 
 Built with **Next.js 14**, the web client offers a premium user experience:
+
 - **Wallet Connection**: Integrated with Wagmi and RainbowKit.
 - **Pages**:
   - `/`: Main marketplace grid.
@@ -102,6 +124,7 @@ Built with **Next.js 14**, the web client offers a premium user experience:
 ## Installation & Setup
 
 ### Prerequisites
+
 - [Bun](https://bun.sh/) (v1.x)
 - [Docker](https://www.docker.com/) (Required for Postgres and Redis)
 - [Foundry](https://book.getfoundry.sh/) (Required for smart contract compilation and testing)
@@ -109,6 +132,7 @@ Built with **Next.js 14**, the web client offers a premium user experience:
 ### Setup Instructions
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository-url>
    cd fitquest-a
@@ -116,6 +140,7 @@ Built with **Next.js 14**, the web client offers a premium user experience:
 
 2. **Install dependencies and start services:**
    The `setup` script will install Bun packages and spin up PostgreSQL and Redis via Docker Compose.
+
    ```bash
    bun run setup
    ```
@@ -131,7 +156,7 @@ Built with **Next.js 14**, the web client offers a premium user experience:
    ```bash
    bun run dev
    ```
-   *This starts both the Next.js frontend (`apps/web`) and the Elysia API (`apps/api`).*
+   _This starts both the Next.js frontend (`apps/web`) and the Elysia API (`apps/api`)._
 
 ## Testing
 

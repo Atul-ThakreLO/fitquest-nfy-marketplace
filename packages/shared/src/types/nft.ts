@@ -41,7 +41,8 @@ export interface TokenInfo {
 }
 
 export interface Listing {
-  tokenId: bigint
+  tokenId: bigint,
+  rarity: number,
   seller: `0x${string}`
   price: bigint           // in wei
   active: boolean
