@@ -14,7 +14,7 @@ import { LoadingPage } from "@/components/ui/LoadingSpinner";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useNFT } from "@/hooks/useNFT";
 import { useListing, useListingHistory } from "@/hooks/useListing";
-import { useAuctionHistory } from "@/hooks/useAuction";
+import { useActiveAuctions, useAuctionHistory } from "@/hooks/useAuction";
 import {
   resolveIPFS,
   truncateAddress,
@@ -40,6 +40,7 @@ export function NFTDetail({ tokenId }: NFTDetailProps) {
   const { data: listing } = useListing(tokenId);
   const { data: marketplaceHistory } = useListingHistory(tokenId);
   const { data: auctionHistory } = useAuctionHistory(tokenId);
+  const { data: activeAuctions } = useActiveAuctions();
   const [imageUrl, setImageUrl] = useState("/placeholder.svg");
 
   const metaDataURL = token?.ipfsCID
@@ -61,6 +62,13 @@ export function NFTDetail({ tokenId }: NFTDetailProps) {
 
   const isOwner = address?.toLowerCase() === token.owner.toLowerCase();
   const isListed = listing?.active === true;
+  const activeAuction = activeAuctions?.find(
+    (auction) =>
+      auction.tokenId === token.tokenId &&
+      !auction.finalized &&
+      auction.endTime > Math.floor(Date.now() / 1000),
+  );
+  const isAuctionListed = !!activeAuction;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -101,7 +109,25 @@ export function NFTDetail({ tokenId }: NFTDetailProps) {
 
         {/* Status */}
         <div className="glass rounded-2xl p-5 space-y-4">
-          {isListed && listing ? (
+          {isAuctionListed && activeAuction ? (
+            <>
+              <div>
+                <p className="text-xs text-zinc-500 mb-1">Live Auction</p>
+                <p className="text-3xl font-bold text-orange-400">
+                  {formatUsdc(activeAuction.highestBid)}
+                </p>
+                <p className="text-sm text-zinc-400 mt-1">
+                  Current highest bid
+                </p>
+              </div>
+              <Link
+                href={`/auction/${activeAuction.auctionId.toString()}`}
+                className="inline-flex items-center justify-center w-full py-3 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl transition-colors"
+              >
+                {isOwner ? "View Auction" : "Place a Bid"}
+              </Link>
+            </>
+          ) : isListed && listing ? (
             <>
               <div>
                 <p className="text-xs text-zinc-500 mb-1">Current Price</p>
